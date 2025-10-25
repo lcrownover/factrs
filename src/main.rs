@@ -1,28 +1,41 @@
 mod components;
-mod context;
 mod filesystem;
 
 use crate::components::{Collector, kernel, memory};
 use anyhow::Result;
-use context::Ctx;
+use rayon::prelude::*;
 use serde_json::{Map, Value};
 use std::sync::Arc;
 
 fn main() -> Result<()> {
     let debug = true;
-    let ctx = Ctx::new(debug);
 
+    // Register all the components here. Each component
+    // implements the Component trait
     let components: Vec<Arc<dyn Collector>> = vec![
         Arc::new(kernel::KernelComponent::new()),
         Arc::new(memory::MemoryComponent::new()),
     ];
 
-    // Build all the components into a huge Map,
-    // ignoring errors (we'll log those to stderr with debug)
-    let facts: Map<String, Value> = components
-        .iter()
-        .filter_map(|c| c.collect(&ctx).ok().map(|v| (c.name().to_string(), v)))
+    // Build all the components in parallel into pairs of information
+    let pairs: Vec<(String, Value)> = components
+        .par_iter()
+        .filter_map(|c| {
+            let name = c.name().to_string();
+            match c.collect() {
+                Ok(v) => Some((name, v)),
+                Err(e) => {
+                    if debug {
+                        eprintln!("[{}] {:#}", name, e);
+                    }
+                    None
+                }
+            }
+        })
         .collect();
+
+    // Collect all the pairs into the main facts structure
+    let facts: Map<String, Value> = pairs.into_iter().collect();
 
     let j = serde_json::to_string(&Value::Object(facts))?;
     println!("{}", j);

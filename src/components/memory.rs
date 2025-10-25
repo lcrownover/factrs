@@ -1,25 +1,4 @@
-// "memory": { // Parsed from /proc/meminfo
-//   "swap": {
-//     "available": "1.14 GiB",
-//     "available_bytes": 1221046272,
-//     "capacity": "45.07%",
-//     "total": "2.07 GiB",
-//     "total_bytes": 2222977024,
-//     "used": "955.52 MiB",
-//     "used_bytes": 1001930752
-//   },
-//   "system": {
-//     "available": "343.66 MiB",
-//     "available_bytes": 360353792,
-//     "capacity": "80.32%",
-//     "total": "1.71 GiB",
-//     "total_bytes": 1831251968,
-//     "used": "1.37 GiB",
-//     "used_bytes": 1470898176
-//   }
-// },
-
-use crate::{context::Ctx, filesystem::slurp};
+use crate::filesystem::slurp;
 
 use crate::Collector;
 use anyhow::{Context, Result};
