@@ -1,7 +1,10 @@
 mod components;
 mod filesystem;
 
-use crate::components::{Collector, kernel, memory, network};
+use crate::components::{
+    Collector, kernel, memory,
+    network::{self, get_ip_device},
+};
 use anyhow::Result;
 use rayon::prelude::*;
 use serde_json::{Map, Value};
@@ -40,5 +43,7 @@ fn main() -> Result<()> {
 
     let j = serde_json::to_string(&Value::Object(facts))?;
     println!("{}", j);
+
+    println!("{}", get_ip_device("eth0")?);
     Ok(())
 }
