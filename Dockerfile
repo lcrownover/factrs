@@ -12,6 +12,7 @@ COPY . .
 RUN cargo build --release --bin factrs
 
 FROM ubuntu:latest AS runtime
+RUN apt-get update && apt-get install jq -y
 WORKDIR /app
 COPY --from=builder /app/target/release/factrs /usr/local/bin
 CMD ["/usr/local/bin/factrs"]
