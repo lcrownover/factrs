@@ -3,14 +3,13 @@
 all: build
 
 build:
-	docker build -t factors .
+	docker build -t factrs .
 
 run: build
-	docker run factors
+	docker run factrs
 
 release:
 	cargo build --release
 
 clean:
 	cargo clean
-

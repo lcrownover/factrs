@@ -1,10 +1,9 @@
-use crate::{context::Ctx, filesystem::get_file_contents_or_empty_string};
+use crate::{context::Ctx, filesystem::slurp};
 
-use super::Component;
+use crate::Collector;
 use anyhow::Result;
 use serde::Serialize;
 use serde_json::to_value;
-use std::fs;
 
 #[derive(Serialize, Debug)]
 pub struct KernelFacts {
@@ -22,20 +21,20 @@ impl KernelComponent {
         Self
     }
 }
-impl Component for KernelComponent {
+impl Collector for KernelComponent {
     fn name(&self) -> &'static str {
-        "kernel"
+        return "kernel";
     }
 
     fn collect(&self, ctx: &Ctx) -> Result<serde_json::Value> {
         let fname = "/proc/sys/kernel/ostype";
-        let ostype = get_file_contents_or_empty_string(ctx, fname);
+        let ostype = slurp(ctx, fname);
 
         let fname = "/proc/sys/kernel/arch";
-        let arch = get_file_contents_or_empty_string(ctx, fname);
+        let arch = slurp(ctx, fname);
 
         let fname = "/proc/sys/kernel/osrelease";
-        let release = get_file_contents_or_empty_string(ctx, fname);
+        let release = slurp(ctx, fname);
 
         let version = match release.split("-").nth(0) {
             Some(t) => t.to_string(),

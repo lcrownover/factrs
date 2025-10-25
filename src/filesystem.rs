@@ -1,8 +1,8 @@
 use crate::context::Ctx;
 
-pub fn get_file_contents_or_empty_string(ctx: &Ctx, path: &str) -> String {
+pub fn slurp(ctx: &Ctx, path: &str) -> String {
     match std::fs::read_to_string(path) {
-        Ok(content) => content,
+        Ok(content) => content.trim().to_string(),
         Err(err) => {
             if ctx.debug {
                 eprintln!("Failed to load {}: {}", path, err);
@@ -12,6 +12,7 @@ pub fn get_file_contents_or_empty_string(ctx: &Ctx, path: &str) -> String {
     }
 }
 
+#[allow(dead_code)]
 pub fn get_dirs_in_path(ctx: &Ctx, path: &str) -> Vec<String> {
     let mut dirs = Vec::new();
     match std::fs::read_dir(path) {

@@ -1,11 +1,9 @@
 pub struct Ctx {
-    pub debug: bool
+    pub debug: bool,
 }
 
 impl Ctx {
     pub fn new(debug: bool) -> Self {
-        Self {
-            debug
-        }
+        Self { debug }
     }
 }

@@ -19,9 +19,9 @@
 //   }
 // },
 
-use crate::{context::Ctx, filesystem::get_file_contents_or_empty_string};
+use crate::{context::Ctx, filesystem::slurp};
 
-use super::Component;
+use crate::Collector;
 use anyhow::Result;
 use serde::Serialize;
 use serde_json::to_value;
@@ -50,13 +50,13 @@ impl MemoryComponent {
         Self
     }
 }
-impl Component for MemoryComponent {
+impl Collector for MemoryComponent {
     fn name(&self) -> &'static str {
         "memory"
     }
 
     fn collect(&self, ctx: &Ctx) -> Result<serde_json::Value> {
-        let contents = get_file_contents_or_empty_string(ctx, "/proc/meminfo");
+        let contents = slurp(ctx, "/proc/meminfo");
         let snapshot = parse_meminfo(&contents);
         let facts = build_memory_facts(snapshot);
         let j = to_value(facts)?;
