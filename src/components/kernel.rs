@@ -1,7 +1,9 @@
+use std::path::Path;
+
 use crate::{context::Ctx, filesystem::slurp};
 
 use crate::Collector;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::Serialize;
 use serde_json::to_value;
 
@@ -26,20 +28,17 @@ impl Collector for KernelComponent {
         return "kernel";
     }
 
-    fn collect(&self, ctx: &Ctx) -> Result<serde_json::Value> {
-        let fname = "/proc/sys/kernel/ostype";
-        let ostype = slurp(ctx, fname);
+    fn collect(&self) -> Result<serde_json::Value> {
+        let ostype = slurp("/proc/sys/kernel/ostype")?;
+        let arch = slurp("/proc/sys/kernel/arch")?;
+        let release = slurp("/proc/sys/kernel/osrelease")?;
 
-        let fname = "/proc/sys/kernel/arch";
-        let arch = slurp(ctx, fname);
+        let version = release
+            .split_once("-")
+            .map(|(v, _)| v)
+            .unwrap_or(&release)
+            .to_string();
 
-        let fname = "/proc/sys/kernel/osrelease";
-        let release = slurp(ctx, fname);
-
-        let version = match release.split("-").nth(0) {
-            Some(t) => t.to_string(),
-            None => release.clone(),
-        };
         let majorversion = release.split(".").take(2).collect::<Vec<_>>().join(".");
 
         let kf = KernelFacts {
@@ -49,7 +48,6 @@ impl Collector for KernelComponent {
             majorversion,
             version,
         };
-        let j = to_value(kf)?;
-        Ok(j)
+        Ok(to_value(kf)?)
     }
 }

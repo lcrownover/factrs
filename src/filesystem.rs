@@ -1,15 +1,10 @@
-use crate::context::Ctx;
+use std::path::Path;
 
-pub fn slurp(ctx: &Ctx, path: &str) -> String {
-    match std::fs::read_to_string(path) {
-        Ok(content) => content.trim().to_string(),
-        Err(err) => {
-            if ctx.debug {
-                eprintln!("Failed to load {}: {}", path, err);
-            }
-            "".to_string()
-        }
-    }
+use crate::context::Ctx;
+use anyhow::{Context, Result};
+
+pub fn slurp(path: impl AsRef<Path>) -> Result<String> {
+    std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.as_ref().display())).map(|s| s.trim().to_string())
 }
 
 #[allow(dead_code)]

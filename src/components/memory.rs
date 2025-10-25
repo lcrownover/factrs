@@ -22,10 +22,11 @@
 use crate::{context::Ctx, filesystem::slurp};
 
 use crate::Collector;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::Serialize;
 use serde_json::to_value;
 use std::collections::HashMap;
+use std::path::Path;
 
 #[derive(Serialize, Debug)]
 pub struct MemoryType {
@@ -48,11 +49,11 @@ impl Collector for MemoryComponent {
         "memory"
     }
 
-    fn collect(&self, ctx: &Ctx) -> Result<serde_json::Value> {
-        let contents = slurp(ctx, "/proc/meminfo");
+    fn collect(&self) -> Result<serde_json::Value> {
+        let contents = slurp(Path::new("/proc/meminfo")).context("failed to read file")?;
         let meminfo = parse_meminfo(&contents);
         let facts = build_memory_facts(meminfo);
-        let j = to_value(facts)?;
+        let j = to_value(facts).context("serializing to json value")?;
         Ok(j)
     }
 }
@@ -93,7 +94,7 @@ fn build_memory_facts(meminfo: HashMap<String, u64>) -> MemoryFacts {
                     total_bytes: *total_bytes,
                 },
             ),
-            _ => continue
+            _ => continue,
         };
     }
 
