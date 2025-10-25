@@ -17,16 +17,12 @@ fn main() -> Result<()> {
         Arc::new(memory::MemoryComponent::new()),
     ];
 
+    // Build all the components into a huge Map,
+    // ignoring errors (we'll log those to stderr with debug)
     let facts: Map<String, Value> = components
         .iter()
         .filter_map(|c| c.collect(&ctx).ok().map(|v| (c.name().to_string(), v)))
         .collect();
-
-    // for c in &components {
-    //     if let Ok(v) = c.collect(&ctx) {
-    //         root.insert(c.name().to_string(), v)
-    //     };
-    // }
 
     let j = serde_json::to_string(&Value::Object(facts))?;
     println!("{}", j);
