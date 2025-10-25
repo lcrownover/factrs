@@ -1,7 +1,7 @@
 mod components;
 mod filesystem;
 
-use crate::components::{Collector, kernel, memory};
+use crate::components::{Collector, kernel, memory, network};
 use anyhow::Result;
 use rayon::prelude::*;
 use serde_json::{Map, Value};
@@ -15,6 +15,7 @@ fn main() -> Result<()> {
     let components: Vec<Arc<dyn Collector>> = vec![
         Arc::new(kernel::KernelComponent::new()),
         Arc::new(memory::MemoryComponent::new()),
+        Arc::new(network::NetworkComponent::new()),
     ];
 
     // Build all the components in parallel into pairs of information

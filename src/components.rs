@@ -1,5 +1,6 @@
 pub mod kernel;
 pub mod memory;
+pub mod network;
 
 use anyhow::Result;
 
