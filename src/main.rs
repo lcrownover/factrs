@@ -3,7 +3,7 @@ mod filesystem;
 
 use crate::components::{
     Collector, kernel, memory,
-    network::{self, get_ip_device},
+    network::{self, get_all_ip_devices, parse_ip_devices_output},
 };
 use anyhow::Result;
 use rayon::prelude::*;
@@ -41,9 +41,10 @@ fn main() -> Result<()> {
     // Collect all the pairs into the main facts structure
     let facts: Map<String, Value> = pairs.into_iter().collect();
 
-    let j = serde_json::to_string(&Value::Object(facts))?;
-    println!("{}", j);
+    let _j = serde_json::to_string(&Value::Object(facts))?;
+    // println!("{}", j);
 
-    println!("{}", get_ip_device("eth0")?);
+    let output = get_all_ip_devices()?;
+    println!("{:?}", parse_ip_devices_output(&output)?);
     Ok(())
 }

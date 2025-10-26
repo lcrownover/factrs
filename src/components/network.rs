@@ -1,10 +1,30 @@
 use crate::Collector;
 use anyhow::{Context, Result};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, to_value};
 use std::collections::HashMap;
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::{Ipv4Addr, Ipv6Addr};
 use std::process::Command;
+
+#[derive(Debug, Deserialize)]
+struct IPDevice {
+    ifname: String,
+    mtu: u32,
+    operstate: String,
+    link_type: String,
+    address: String,
+    addr_info: Vec<IPDeviceAddr>,
+}
+
+#[derive(Debug, Deserialize)]
+struct IPDeviceAddr {
+    family: String,
+    local: String,
+    broadcast: Option<String>,
+    prefixlen: u32,
+    scope: String,
+    label: Option<String>,
+}
 
 #[derive(Debug, Serialize)]
 pub enum InterfaceState {
@@ -17,6 +37,8 @@ pub enum InterfaceState {
 pub struct InterfaceFields {
     /// The state of the interface
     pub state: InterfaceState,
+    /// The type of the link
+    pub link_type: String,
     /// The DHCP server for the network interface.
     pub dhcp: Option<Ipv4Addr>,
     /// The IPv4 address for the network interface.
@@ -89,6 +111,7 @@ impl Collector for NetworkComponent {
                 bindings6: vec!["fe80::c468:27d4:bd86:a4f6".parse::<Ipv6Addr>()?],
                 interface_fields: InterfaceFields {
                     state: InterfaceState::UP,
+                    link_type: "inet".to_string(),
                     mac: "3e:0a:ff:fd:7f:9f".to_string(),
                     mtu: 1500,
                     scope6: "scope".to_string(),
@@ -110,6 +133,7 @@ impl Collector for NetworkComponent {
             primary: "eth0".to_string(),
             interface_fields: InterfaceFields {
                 state: InterfaceState::UP,
+                link_type: "inet".to_string(),
                 mac: "3e:0a:ff:fd:7f:9f".to_string(),
                 mtu: 1500,
                 scope6: "scope".to_string(),
@@ -127,54 +151,17 @@ impl Collector for NetworkComponent {
     }
 }
 
-pub fn get_all_ip_devices(name: &str) -> Result<Vec<Value>> {
-    // {
-    //   "ifname": "ib0",
-    //   "mtu": 2044,
-    //   "operstate": "UP",
-    //   "link_type": "infiniband",
-    //   "address": "00:00:09:15:fe:80:00:00:00:00:00:00:0c:42:a1:03:00:16:2a:a4",
-    //   "broadcast": "00:ff:ff:ff:ff:12:40:1b:ff:ff:00:00:00:00:00:00:ff:ff:ff:ff",
-    //   "addr_info": [
-    //     {
-    //       "family": "inet",
-    //       "local": "172.20.8.245",
-    //       "prefixlen": 21,
-    //       "broadcast": "172.20.15.255",
-    //       "scope": "global",
-    //       "label": "ib0",
-    //     }
-    //   ]
-    // },
-    // {
-    //   "ifname": "eno1np0",
-    //   "mtu": 1500,
-    //   "operstate": "UP",
-    //   "group": "default",
-    //   "link_type": "ether",
-    //   "address": "bc:97:e1:5a:90:de",
-    //   "broadcast": "ff:ff:ff:ff:ff:ff",
-    //   "addr_info": [
-    //     {
-    //       "family": "inet",
-    //       "local": "128.223.192.245",
-    //       "prefixlen": 21,
-    //       "broadcast": "128.223.199.255",
-    //       "scope": "global",
-    //       "label": "eno1np0",
-    //     },
-    //     {
-    //       "family": "inet6",
-    //       "local": "fe80::be97:e1ff:fe5a:90de",
-    //       "prefixlen": 64,
-    //       "scope": "link",
-    //     }
-    //   ]
-    // },
-    //
-    // TODO: parse an `addr_info` item and sort it into interface fields
-    // using the `family` (v4/v6).
+pub fn parse_ip_devices_output(output: &str) -> Result<Vec<Interface>> {
+    let facts = NetworkFacts{};
+    // TODO: next up, get hostname, domain, fqdn, and primary device working
+    let devices: Vec<IPDevice> = serde_json::from_str(&output)?;
+    for device in devices {
 
+    }
+    Ok(vec![])
+}
+
+pub fn get_all_ip_devices() -> Result<String> {
     let output = Command::new("ip")
         .arg("-j")
         .arg("addr")
@@ -182,7 +169,6 @@ pub fn get_all_ip_devices(name: &str) -> Result<Vec<Value>> {
         .output()
         .with_context(|| format!("running ip -j addr show"))?
         .stdout;
-    let js = String::from_utf8(output)?;
-    let v = serde_json::from_str(&js)?;
-    Ok(v)
+    let output = String::from_utf8(output)?;
+    Ok(output.trim_end().to_string())
 }
